@@ -71,12 +71,12 @@ class AutoHunterV7_0:
         self.ui_scale = tk.DoubleVar(value=1.0) # UI 배율
         self.custom_sound_path = tk.StringVar(value="")
         
-        # [추가] 자동 판매 이미지 설정 (숫자 기반으로 변경)
+        # 자동 판매 이미지 설정
         self.sell_img_files = {
-            "icon": "sell1.png",     # 1. 상점 아이콘 (더블클릭)
-            "btn_sell": "sell2.png", # 2. 일괄판매 버튼
-            "btn_conf": "sell3.png", # 3. 확인 버튼
-            "btn_exit": "sell4.png"  # 4. 나가기 버튼
+            "icon": "sell1.png",
+            "btn_sell": "sell2.png",
+            "btn_conf": "sell3.png",
+            "btn_exit": "sell4.png"
         }
         
         # 스크린샷 관련 변수 초기화
@@ -85,7 +85,7 @@ class AutoHunterV7_0:
         self.SCREENSHOT_DIR = "screenshots"
         if not os.path.exists(self.SCREENSHOT_DIR): os.makedirs(self.SCREENSHOT_DIR)
 
-        # 텔레그램 설정 (보안을 위해 토큰 삭제)
+        # 텔레그램 설정 (배포용은 비워둠)
         self.TELEGRAM_TOKEN = ""
         self.TELEGRAM_CHAT_ID = ""
         
@@ -103,7 +103,7 @@ class AutoHunterV7_0:
         threading.Thread(target=self.monitor_loop, daemon=True).start()
         threading.Thread(target=self.anti_macro_loop, daemon=True).start()
         keyboard.add_hotkey('f12', self.toggle_running_from_key)
-        keyboard.add_hotkey('f11', self.run_manual_sell) # F11로 수동 판매 루틴
+        keyboard.add_hotkey('f11', self.run_manual_sell) 
 
     def setup_styles(self):
         s = self.ui_scale.get()
@@ -122,7 +122,7 @@ class AutoHunterV7_0:
         style.configure("TCombobox", fieldbackground="#393e46", background="#393e46", foreground="white", font=("Malgun Gothic", int(8*s)))
 
     def setup_ui(self):
-        for child in self.root.winfo_children(): child.destroy() # 리스케일 시 초기화
+        for child in self.root.winfo_children(): child.destroy() 
         s = self.ui_scale.get()
         self.root.geometry(f"{int(380*s)}x{int(680*s)}")
 
@@ -136,13 +136,11 @@ class AutoHunterV7_0:
         self.start_btn = tk.Button(top_bar, text="시작(F12)", bg="#00adb5", fg="white", font=("Malgun Gothic", int(9*s), "bold"), command=self.toggle_running, relief=tk.FLAT)
         self.start_btn.pack(side=tk.RIGHT, padx=2, fill=tk.Y)
 
-        # 탭 시스템
         self.notebook = ttk.Notebook(self.root)
         self.notebook.pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
 
         # 1. 메인 탭
         self.tab_main = ttk.Frame(self.notebook); self.notebook.add(self.tab_main, text="메인")
-        
         self.preview_label = tk.Label(self.tab_main, text="미니맵 대기 중", bg="#121212", fg="#393e46", height=int(7*s))
         self.preview_label.pack(fill=tk.X, padx=2, pady=2)
         
@@ -165,7 +163,6 @@ class AutoHunterV7_0:
 
         # 2. 스킬/수치 탭
         self.tab_skill = ttk.Frame(self.notebook); self.notebook.add(self.tab_skill, text="스킬")
-        
         s_group = ttk.LabelFrame(self.tab_skill, text=" 설정 "); s_group.pack(fill=tk.X, padx=2, pady=2)
         for label, var, min_v, max_v in [
             ("공격(ms):", self.attack_delay_ms, 100, 3000), 
@@ -180,11 +177,9 @@ class AutoHunterV7_0:
             ttk.Entry(f, textvariable=var, width=5).pack(side=tk.RIGHT)
 
         k_group = ttk.LabelFrame(self.tab_skill, text=" 키 설정 "); k_group.pack(fill=tk.X, padx=2, pady=2)
-        special_keys = ["space", "ctrl", "alt", "shift", "insert", "del", "home", "end", "pgup", "pgdn", "enter", "tab", "esc"]
-        arrow_keys = ["up", "down", "left", "right"]
-        alpha_keys = list("abcdefghijklmnopqrstuvwxyz")
-        num_keys = [str(i) for i in range(10)]
-        keys_list = special_keys + arrow_keys + alpha_keys + num_keys
+        special_keys = ["space", "ctrl", "alt", "shift", "insert", "del", "home", "end", "pgup", "pgdn", "enter", "tab", "esc", "up", "down", "left", "right"]
+        alpha_keys = list("abcdefghijklmnopqrstuvwxyz") + [str(i) for i in range(10)]
+        keys_list = special_keys + alpha_keys
         
         for label, var in [("공격:", self.KEY_ATTACK), ("이동:", self.KEY_DASH), ("점프:", self.KEY_JUMP), ("펫먹이:", self.KEY_PETFOOD)]:
             f = ttk.Frame(k_group); f.pack(side=tk.LEFT, expand=True, padx=1)
@@ -193,10 +188,8 @@ class AutoHunterV7_0:
 
         # 3. 기능 탭
         self.tab_extra = ttk.Frame(self.notebook); self.notebook.add(self.tab_extra, text="기능")
-        
         sell_f = ttk.LabelFrame(self.tab_extra, text=" 원클릭 자동 판매 (F11) "); sell_f.pack(fill=tk.X, padx=2, pady=2)
         ttk.Checkbutton(sell_f, text="자동 판매(주기) 활성화", variable=self.use_auto_sell).pack(anchor=tk.W, padx=2)
-        
         f_s1 = ttk.Frame(sell_f); f_s1.pack(fill=tk.X, pady=2)
         ttk.Label(f_s1, text="판매 주기(분):", width=12).pack(side=tk.LEFT)
         ttk.Scale(f_s1, from_=10, to=30, variable=self.sell_interval_min).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=2)
@@ -211,16 +204,13 @@ class AutoHunterV7_0:
         
         ui_f = ttk.LabelFrame(self.tab_extra, text=" UI/배율 설정 "); ui_f.pack(fill=tk.X, padx=2, pady=2)
         ttk.Checkbutton(ui_f, text="항상 위", variable=self.always_on_top, command=self.update_ui_settings).pack(anchor=tk.W, padx=2)
-        
         f_sc = ttk.Frame(ui_f); f_sc.pack(fill=tk.X, pady=1)
         ttk.Label(f_sc, text="UI 배율:").pack(side=tk.LEFT)
         sc_cb = ttk.Combobox(f_sc, textvariable=self.ui_scale, values=[0.5, 0.75, 1.0, 1.25, 1.5], width=5)
         sc_cb.pack(side=tk.LEFT, padx=5); sc_cb.bind("<<ComboboxSelected>>", lambda e: self.rescale_ui())
-
         f_op = ttk.Frame(ui_f); f_op.pack(fill=tk.X)
         ttk.Label(f_op, text="투명도:").pack(side=tk.LEFT); ttk.Scale(f_op, from_=0.2, to=1.0, variable=self.ui_opacity, command=lambda x: self.update_ui_settings()).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=2)
 
-        # 로그 영역
         self.log_text = tk.Text(self.root, height=5, bg="#121212", fg="#aaaaaa", borderwidth=0, font=("Consolas", int(8*s)), padx=2, pady=2)
         self.log_text.pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
 
@@ -235,9 +225,19 @@ class AutoHunterV7_0:
 
     def on_sel_press(self, e): self.start_x, self.start_y = e.x, e.y; self.rect = self.sel_canvas.create_rectangle(e.x, e.y, e.x, e.y, outline="cyan", width=3)
     def on_sel_drag(self, e): self.sel_canvas.coords(self.rect, self.start_x, self.start_y, e.x, e.y)
+    
+    def open_selector(self):
+        self.selector = tk.Toplevel(self.root); self.selector.attributes("-alpha", 0.3); self.selector.attributes("-fullscreen", True)
+        self.selector.attributes("-topmost", True); self.selector.config(cursor="cross")
+        self.sel_canvas = tk.Canvas(self.selector, cursor="cross", bg="grey"); self.sel_canvas.pack(fill="both", expand=True)
+        self.start_x = None; self.start_y = None; self.rect = None
+        self.sel_canvas.bind("<ButtonPress-1>", self.on_sel_press); self.sel_canvas.bind("<B1-Motion>", self.on_sel_drag); self.sel_canvas.bind("<ButtonRelease-1>", self.on_sel_release)
+
     def on_sel_release(self, e):
         w, h = abs(e.x - self.start_x), abs(e.y - self.start_y)
-        if w > 5: self.reg_l.set(min(self.start_x, e.x)); self.reg_t.set(min(self.start_y, e.y)); self.reg_w.set(w); self.reg_h.set(h); self.x_max.set(w-15); self.log(f"영역 설정: {w}x{h}")
+        if w > 5:
+            self.reg_l.set(min(self.start_x, e.x)); self.reg_t.set(min(self.start_y, e.y))
+            self.reg_w.set(w); self.reg_h.set(h); self.x_max.set(w-15); self.log(f"영역 설정: {w}x{h}")
         self.selector.destroy()
 
     def on_sell_capture_release(self, e, target):
@@ -256,69 +256,47 @@ class AutoHunterV7_0:
         threading.Thread(target=self.run_sell_routine, daemon=True).start()
 
     def find_and_click(self, img_path, double=False, msg=""):
-        if not os.path.exists(img_path):
-            self.log(f"❌ 파일 없음: {img_path}")
-            return False
-        
+        if not os.path.exists(img_path): return False
         template = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
         with mss.mss() as sct:
             scr = np.array(sct.grab(sct.monitors[0]))
             scr_gray = cv2.cvtColor(scr, cv2.COLOR_BGRA2GRAY)
             res = cv2.matchTemplate(scr_gray, template, cv2.TM_CCOEFF_NORMED)
             _, max_val, _, max_loc = cv2.minMaxLoc(res)
-            
             if max_val > 0.8:
                 h, w = template.shape
-                target_x = max_loc[0] + w // 2
-                target_y = max_loc[1] + h // 2
-                if double:
-                    pyautogui.doubleClick(target_x, target_y)
-                else:
-                    pyautogui.click(target_x, target_y)
+                tx, ty = max_loc[0] + w // 2, max_loc[1] + h // 2
+                if double: pyautogui.doubleClick(tx, ty)
+                else: pyautogui.click(tx, ty)
                 if msg: self.log(f"✅ {msg}")
                 return True
         return False
 
     def run_sell_routine(self):
         if self.is_selling: return
-        self.is_selling = True
-        was_running = self.is_running
-        if was_running: self.toggle_running() # 사냥 잠시 중단
-        
+        self.is_selling = True; was_running = self.is_running
+        if was_running: self.toggle_running() 
         self.log("💰 [판매 루틴] 시작")
         try:
             time.sleep(1.0)
             shop_icons = ["sell1-1.png", "sell1-2.png", "sell1-3.png"]
-            found_shop = False
-            for icon_file in shop_icons:
-                if self.find_and_click(icon_file, double=True, msg=f"상점 아이콘 발견"):
-                    found_shop = True; break
-            
-            if not found_shop: raise Exception("상점 아이콘을 찾지 못했습니다.")
+            found = False
+            for f in shop_icons:
+                if self.find_and_click(f, double=True, msg="상점 아이콘 발견"): found = True; break
+            if not found: raise Exception("상점 아이콘 미발견")
             time.sleep(1.5)
-            
             if not self.find_and_click("sell2.png", msg="일괄판매 클릭"): raise Exception("일괄판매 버튼 미발견")
             time.sleep(1.2)
-            
             if not self.find_and_click("sell3.png", msg="확인 클릭"): self.log("⚠️ 확인 버튼 미발견")
             time.sleep(1.0)
-            
             if not self.find_and_click("sell4.png", msg="상점 닫기"): self.log("⚠️ 나가기 버튼 미발견")
-            
-            self.log("✨ [판매 루틴] 완료")
-            winsound.Beep(1000, 200)
-        except Exception as e:
-            self.log(f"❌ [판매 실패] {e}")
-        
-        self.last_sell_time = time.time()
-        self.is_selling = False
+            self.log("✨ [판매 루틴] 완료"); winsound.Beep(1000, 200)
+        except Exception as e: self.log(f"❌ [판매 실패] {e}")
+        self.last_sell_time = time.time(); self.is_selling = False
         if was_running: time.sleep(0.5); self.toggle_running()
 
     def rescale_ui(self):
-        self.setup_styles()
-        self.setup_ui()
-        self.update_ui_settings()
-        self.log(f"UI 배율 변경: {self.ui_scale.get()}x")
+        self.setup_styles(); self.setup_ui(); self.update_ui_settings(); self.log(f"UI 배율 변경: {self.ui_scale.get()}x")
 
     def log(self, msg):
         self.log_text.config(state=tk.NORMAL)
@@ -401,7 +379,6 @@ class AutoHunterV7_0:
         except: pass
 
     def press_key(self, key): pyautogui.keyDown(key); time.sleep(random.uniform(0.08, 0.12)); pyautogui.keyUp(key)
-
     def toggle_running_from_key(self): self.root.after(0, self.toggle_running)
     def toggle_running(self):
         if self.is_running:
